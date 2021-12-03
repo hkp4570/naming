@@ -28,12 +28,6 @@ export default class Index extends Component<any,IState> {
     }
   }
 
-  componentWillMount () { }
-
-  componentDidMount () { }
-
-  componentWillUnmount () { }
-
   handleChange (value) {
     this.setState({
       value
@@ -45,8 +39,9 @@ export default class Index extends Component<any,IState> {
     });
   }
   handleCreateName(){
+    const { surnameInpVal, value } = this.state;
     navigateTo({
-      url: '/pages/name/index'
+      url: '/pages/name/index?surname=' + surnameInpVal + '&book=' + value
     })
   }
 
