@@ -1,10 +1,10 @@
 // 从arr数组中获取一个默认值
 export const choose = (arr) => {
-  const index = random(0, arr.length);
+  const index = between(0, arr.length);
   return arr[index];
 }
 // 获取默认值
-export const random = (min,max) => {
+export const between = (min,max) => {
    return min + Math.floor(Math.random() * (max-min));
 }
 // setState Promise化
