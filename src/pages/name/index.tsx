@@ -1,26 +1,42 @@
 import { Component } from 'react';
-import {getCurrentInstance } from '@tarojs/taro';
+import { getCurrentInstance } from '@tarojs/taro';
 import { View, Text } from '@tarojs/components';
-import {AtToast, AtCard, AtDivider } from 'taro-ui';
+import {AtToast, AtCard, AtDivider, AtButton} from 'taro-ui';
 import bookCollect from '../../json/index';
-import { choose, badChars, between } from '../../uitls/utils';
+import { choose, badChars, between, sleep } from '../../uitls/utils';
+import {Simulate} from "react-dom/test-utils";
 
 export default class nameIndex extends Component{
   state={
     loading: true,
     nameArrData:[],
+    moreLoading: false,
   }
   $instance = getCurrentInstance();
-  componentDidMount() {
+  loadData(){
     const names = [];
     for (let i = 0; i < 6; i++){
       const name = this.createName();
       names.push(name);
     }
-    console.log(names,'names')
-    this.setState({
-      nameArrData:names,
-    });
+    // name: "李揖兮"
+    // author: "佚名"
+    // dynasty: "春秋"
+    // content: "<p>子之还兮，遭我乎狃之间兮。并驱从两肩兮，揖我谓我儇兮。</p>"
+    // book: "诗经"
+    // title: "还"
+    console.log(names,'names');
+
+    sleep(1).then(() => {
+      this.setState({
+        nameArrData:[...this.state.nameArrData,...names],
+        loading: false,
+        moreLoading: false,
+      });
+    })
+  }
+  componentDidMount() {
+    this.loadData();
   }
   createName(){
     const { surname='李', book='shijing' } = this.$instance.router.params;
@@ -40,13 +56,18 @@ export default class nameIndex extends Component{
         name,
         author,
         dynasty,
-        content,
+        content: this.highLightName(name,content),
         book,
         title
       }
     }catch (error){
       throw new Error(error);
     }
+  }
+  highLightName(name,content){
+    if(!name) return content;
+    const reg = new RegExp(`[${name}]`,'ig');
+    return content.replace(reg, char => `<strong style="font-weight: bold">${char}</strong>`)
   }
   getTwoChar(arr){
     const len = arr.length;
@@ -87,25 +108,43 @@ export default class nameIndex extends Component{
     str = str.replace(/\(.+\)/g,'');
     return str;
   }
+  // 加载更多
+  loadMore(){
+    this.setState({moreLoading:true});
+    this.loadData();
+  }
   render() {
-    const { nameArrData } = this.state;
-    console.log(nameArrData,'nameArrData')
+    const { nameArrData, loading, moreLoading } = this.state;
     return <View>
-      <AtToast isOpened text="加载中" status={'loading'} />
       {
-        nameArrData.map((item,index) => (
+        loading ? (
+          <AtToast isOpened text="加载中" status={'loading'} />
+        ) : (
           <View>
-            <AtCard
-              key={index}
-              note={`[${item.dynasty}] ${item.author}`}
-              extra={`${item.book}●${item.title}`}
-              title={item.name}
-            >
-              <View dangerouslySetInnerHTML={{__html: item.content}} />
-            </AtCard>
-            <AtDivider/>
+            {
+              nameArrData.length ? nameArrData.map((item,index) => (
+                <View key={index}>
+                  {
+                    item ? (
+                      <View>
+                        <AtCard
+                          note={`[${item.dynasty}] ${item.author}`}
+                          // extra={`${item.book}●${item.title}`}
+                          title={item.name}
+                        >
+                          <View dangerouslySetInnerHTML={{__html: item.content}} />
+                          <View style={{marginTop:10}}>{`—— ${item.book}●${item.title}`}</View>
+                        </AtCard>
+                        <AtDivider/>
+                      </View>
+                    ) : null
+                  }
+                </View>
+              )) : null
+            }
+            <AtButton type='primary' loading={moreLoading} size={'normal'} customStyle={{width:'40%', marginBottom:40}} onClick={() => this.loadMore()}>加载更多</AtButton>
           </View>
-        ))
+        )
       }
     </View>;
   }
